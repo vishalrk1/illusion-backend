@@ -5,6 +5,6 @@
 - Typescript
 
 ## Roadmap
-[] APIs for authentication for JWT 
-[] CRUD APis for user profile and address
-[] APIs for categories & Products
+- [x] APIs for authentication for JWT 
+- [ ] CRUD APis for user profile and address
+- [ ] APIs for categories & Products
