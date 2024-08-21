@@ -1,4 +1,4 @@
-import Category, { ICategory } from "@models/Category";
+import Category, { ICategory } from "../models/Category";
 import { Request, Response } from "express";
 
 // create one category
@@ -42,7 +42,7 @@ export const getCategoryById = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { id } = req.body;
+  const { id } = req.params;
   try {
     const category = await Category.findById(id);
     res
@@ -61,7 +61,7 @@ export const updateCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { id } = req.body;
+  const { id } = req.params;
 
   try {
     const category = await Category.findByIdAndUpdate(id, req.body, {
@@ -90,7 +90,7 @@ export const deleteCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { id } = req.body;
+  const { id } = req.params;
   try {
     const category = await Category.findByIdAndDelete(id);
     if (!category) {

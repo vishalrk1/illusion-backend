@@ -1,5 +1,5 @@
-import Address from "@models/Address";
-import User from "@models/User";
+import Address from "../models/Address";
+import User from "../models/User";
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 
