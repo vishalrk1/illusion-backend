@@ -19,7 +19,7 @@ export interface IUser extends Document {
 const userSchema = new Schema<IUser>(
   {
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true},
+    password: { type: String, required: true },
     first_name: { type: String, required: true },
     last_name: { type: String },
     phone: { type: String },
@@ -44,7 +44,6 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.comparePassword = async function (
   userPassword: string
 ): Promise<boolean> {
-  console.log(userPassword, this.password)
   return bcrypt.compare(userPassword, this.password);
 };
 

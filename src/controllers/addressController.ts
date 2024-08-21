@@ -1,6 +1,7 @@
 import Address from "@models/Address";
 import User from "@models/User";
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 
 export const addAddress = async (
   req: Request,
@@ -91,21 +92,60 @@ export const updateAddress = async (
       message: "Address updated sucessfully",
       address: address,
     });
-
-    // const addressIndex = user.addresses.findIndex(
-    //   (addr) => addr._id.toString() === addressId
-    // );
-
-    // if (addressIndex === -1) {
-    //   res.status(404).json({ message: "Address not found" });
-    //   return;
-    // }
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Error updating address",
-        error: (error as Error).message,
-      });
+    res.status(500).json({
+      message: "Error updating address",
+      error: (error as Error).message,
+    });
+  }
+};
+
+export const deleteAddress = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const userId = req.user!._id;
+  const { addressId } = req.params;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      await session.abortTransaction();
+      session.endSession();
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const addressIndex = user.addresses.findIndex(
+      (addr) => addr._id === addressId
+    );
+
+    if (addressIndex === -1) {
+      await session.abortTransaction();
+      session.endSession();
+      res.status(404).json({ message: "Address not found" });
+      return;
+    }
+
+    const removedAddress = user.addresses.splice(addressIndex, 1)[0];
+    if (removedAddress.isDefault && user.addresses.length > 0) {
+      user.addresses[0].isDefault = true;
+    }
+
+    await user.save({ session });
+    await Address.findByIdAndDelete(addressId).session(session);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      message: "Address deleted sucessfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error in deleting Address" });
   }
 };
