@@ -1,11 +1,14 @@
 import express from "express";
-import * as categoryController from "../controllers/categoryControllers";
 import { authenticate, authorize } from "../middleware/authMiddleware";
+
+import * as categoryController from "../controllers/categoryControllers";
+import * as productsController from "../controllers/productsController";
 
 const router = express.Router();
 
 router.get("/", categoryController.getCateories);
 router.get("/:id", categoryController.getCategoryById);
+router.get("/products/:id", productsController.getProductsByCategory);
 
 // Admin
 router.post(

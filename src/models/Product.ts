@@ -9,6 +9,7 @@ export interface IProduct extends Document {
   stockQuantity: number;
   specifications: string[];
   isFeatured: boolean;
+  category: mongoose.Types.ObjectId;
   isAvailable(quantity: number): Promise<boolean>;
 }
 
@@ -21,6 +22,7 @@ const productSchema = new Schema<IProduct>({
   stockQuantity: { type: Number, required: true, default: 1 },
   specifications: [{ type: String }],
   isFeatured: { type: Boolean, default: false },
+  category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
 });
 
 productSchema.methods.isAvailable = async (

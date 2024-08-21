@@ -2,9 +2,16 @@
 
 ## Tech stack
 - Node Js
+- Express
 - Typescript
 
 ## Roadmap
 - [x] APIs for authentication for JWT 
-- [ ] CRUD APis for user profile and address
-- [ ] APIs for categories & Products
+- [x] CRUD APis for user profile and address
+- [x] APIs for categories & Products
+- [ ] Add & GET feedback api
+- [ ] User Cart API's
+- [ ] User Wishlist API's
+- [ ] User Orders related API's
+- [ ] API's for admin dashboard
+- [ ] API for payment with stripe
