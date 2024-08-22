@@ -6,15 +6,23 @@ export const getProducts = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  const { isFeatured } = req.query;
   try {
-    const products = await Product.find();
+    let query: any = {};
+    if (isFeatured === "true") {
+      query.isFeatured = true;
+    }
+    const products = await Product.find(query).populate("category");
     res
       .status(200)
       .json({ message: "Products fetched sucessfully", data: products });
   } catch (error) {
     res
       .status(400)
-      .json({ message: "Cant get Products, Something went wrong" });
+      .json({
+        message: "Cant get Products, Something went wrong",
+        error: (error as Error).message,
+      });
   }
 };
 
@@ -24,8 +32,13 @@ export const getProductsByCategory = async (
   res: Response
 ): Promise<void> => {
   const { id } = req.params;
+  const { isFeatured } = req.query;
   try {
-    const products = await Product.find({ category: id });
+    let query: any = { category: id };
+    if (isFeatured === "true") {
+      query.isFeatured = true;
+    }
+    const products = await Product.find(query);
     res
       .status(200)
       .json({ message: "Products fetched sucessfully", data: products });
@@ -78,9 +91,11 @@ export const updateProduct = async (
   res: Response
 ): Promise<void> => {
   const { id } = req.params;
-  console.log(id)
+  console.log(id);
   try {
-    const product = await Product.findByIdAndUpdate(id, req.body, { new: true });
+    const product = await Product.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
 
     if (!product) {
       res.status(404).json({ message: "Product not found" });
