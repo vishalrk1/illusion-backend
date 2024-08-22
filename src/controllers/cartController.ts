@@ -1,9 +1,12 @@
-import Cart, { CartItem } from "@models/Cart";
 import { Request, Response } from "express";
+import Cart, { CartItem } from "../models/Cart";
+import User from "../models/User";
 
 export const getCart = async (req: Request, res: Response): Promise<void> => {
-  const userId = req.user!._id;
+  const userId = req.user!.id;
   try {
+    const user = await User.findById(userId)
+    console.log(user)
     const cart = await Cart.find({ user: userId }).populate("items.product");
 
     if (!cart) {
@@ -27,7 +30,7 @@ export const addProductToCart = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const userId = req.user!._id;
+  const userId = req.user.id;
   const { productId, quantity } = req.body;
   try {
     let cart = await Cart.findOne({ user: userId }).populate("items.product");
@@ -50,6 +53,58 @@ export const addProductToCart = async (
   } catch (error) {
     res.status(400).json({
       message: "Cant get cart, something went wrong",
+      error: (error as Error).message,
+    });
+  }
+};
+
+export const updateCartItem = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { productId, quantity } = req.body;
+    const cart = await Cart.findOne({ user: req.user!.id });
+
+    if (!cart) {
+      res.status(404).json({ message: "Cart not found" });
+    }
+
+    const item = cart.items.find(
+      (item) => item.product.toString() === productId
+    );
+
+    if (!item) {
+      res.status(404).json({ message: "Item not found in cart" });
+    }
+
+    item.quantity = quantity;
+    await cart.save();
+    res.status(200).json({ message: "Updated cart sucessfully", data: cart });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating cart" });
+  }
+};
+
+export const removeCartItem = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const cart = await Cart.findOne({ user: req.user!.id });
+
+    if (!cart) {
+      res.status(404).json({ message: "Cart not found" });
+    }
+
+    cart.items = cart.items.filter(
+      (item) => item.product.toString() !== req.params.productId
+    );
+    await cart.save();
+    res.status(200).json({ message: "Items removed sucessfully", data: cart });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error removing item from cart",
       error: (error as Error).message,
     });
   }

@@ -15,3 +15,7 @@
 - [ ] User Orders related API's
 - [ ] API's for admin dashboard
 - [ ] API for payment with stripe
+
+## Frontend Integration
+- [ ] Onboarding users
+- [ ] Category & Producs flow
