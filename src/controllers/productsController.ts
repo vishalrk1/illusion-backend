@@ -1,28 +1,55 @@
-import Product from "../models/Product";
+import Wishlist from "@models/Wishlist";
+import Product, { IProduct } from "../models/Product";
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 
 // get all producte
 export const getProducts = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  const userId = req.user!.id;
   const { isFeatured } = req.query;
   try {
     let query: any = {};
     if (isFeatured === "true") {
       query.isFeatured = true;
     }
-    const products = await Product.find(query).populate("category");
-    res
-      .status(200)
-      .json({ message: "Products fetched sucessfully", data: products });
-  } catch (error) {
-    res
-      .status(400)
-      .json({
-        message: "Cant get Products, Something went wrong",
-        error: (error as Error).message,
+
+    const products =
+      isFeatured === "true"
+        ? await Product.find(query).populate("category")
+        : await Product.find(query);
+
+    // if logged in
+    if (userId) {
+      const wishlist = await Wishlist.findOne({ user: userId });
+      const productsWithWishlistInfo = products.map((product: IProduct) => ({
+        ...product,
+        isWishlisted: wishlist
+          ? wishlist.products.includes(product._id as mongoose.Types.ObjectId)
+          : false,
+      }));
+      res.status(200).json({
+        message: "Products fetched sucessfully",
+        data: productsWithWishlistInfo,
       });
+    } else {
+      // If use not logged in
+      const productsWithWishlistInfo = products.map((product: IProduct) => ({
+        ...product,
+        isWishlisted: false,
+      }));
+      res.status(200).json({
+        message: "Products fetched sucessfully",
+        data: productsWithWishlistInfo,
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      message: "Cant get Products, Something went wrong",
+      error: (error as Error).message,
+    });
   }
 };
 

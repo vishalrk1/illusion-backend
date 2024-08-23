@@ -4,7 +4,12 @@ import { authenticate, authorize } from "../middleware/authMiddleware";
 
 const router = Router();
 
-router.get("/", productsController.getProducts);
+router.get(
+  "/",
+  authenticate,
+  authorize(["user", "admin"]),
+  productsController.getProducts
+);
 router.get("/:id", productsController.getProductById);
 
 // Admin routers
@@ -29,4 +34,4 @@ router.put(
   productsController.removeProduct
 );
 
-export default router
+export default router;

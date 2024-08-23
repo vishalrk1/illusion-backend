@@ -77,10 +77,6 @@ export const updateCartItem = async (
       (item) => item.product.toString() === productId
     );
 
-    // const item = cart.items.find(
-    //   (item) => item.product.toString() === productId
-    // );
-
     if (itemIndex === -1) {
       res.status(404).json({ message: "Item not found in cart" });
     }
