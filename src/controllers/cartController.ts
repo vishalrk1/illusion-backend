@@ -1,13 +1,15 @@
 import { Request, Response } from "express";
 import Cart, { CartItem } from "../models/Cart";
 import User from "../models/User";
+import { calculateCartTotal } from "utils/cartHelpers";
+import Product from "@models/Product";
 
 export const getCart = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const user = await User.findById(userId)
-    console.log(user)
-    const cart = await Cart.find({ user: userId }).populate("items.product");
+    const user = await User.findById(userId);
+    console.log(user);
+    const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
     if (!cart) {
       res.status(404).json({
@@ -35,7 +37,7 @@ export const addProductToCart = async (
   try {
     let cart = await Cart.findOne({ user: userId }).populate("items.product");
     if (!cart) {
-      cart = new Cart({ user: userId, items: [] });
+      cart = new Cart({ user: userId, items: [], total: 0 });
     }
 
     const existingCartItem = cart.items.find(
@@ -48,6 +50,7 @@ export const addProductToCart = async (
       cart.items.push({ product: productId, quantity: quantity } as CartItem);
     }
 
+    cart.total = await calculateCartTotal(cart);
     await cart.save();
     res.status(200).json({ message: "Item added sucessfully", data: cart });
   } catch (error) {
@@ -70,15 +73,31 @@ export const updateCartItem = async (
       res.status(404).json({ message: "Cart not found" });
     }
 
-    const item = cart.items.find(
+    const itemIndex = cart.items.findIndex(
       (item) => item.product.toString() === productId
     );
 
-    if (!item) {
+    // const item = cart.items.find(
+    //   (item) => item.product.toString() === productId
+    // );
+
+    if (itemIndex === -1) {
       res.status(404).json({ message: "Item not found in cart" });
     }
 
-    item.quantity = quantity;
+    if (quantity === 0) {
+      cart.items.splice(itemIndex, 1);
+    } else {
+      // checking if product has sufficient stock
+      const product = await Product.findById(productId);
+      if (!product || product.stockQuantity < quantity) {
+        res.status(400).json({ message: "Stock is not available!" });
+        return;
+      }
+      cart.items[itemIndex].quantity = quantity;
+    }
+
+    cart.total = await calculateCartTotal(cart);
     await cart.save();
     res.status(200).json({ message: "Updated cart sucessfully", data: cart });
   } catch (error) {
@@ -100,6 +119,7 @@ export const removeCartItem = async (
     cart.items = cart.items.filter(
       (item) => item.product.toString() !== req.params.productId
     );
+    cart.total = await calculateCartTotal(cart);
     await cart.save();
     res.status(200).json({ message: "Items removed sucessfully", data: cart });
   } catch (error) {
