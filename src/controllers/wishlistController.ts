@@ -1,6 +1,6 @@
-import Product from "@models/Product";
-import Wishlist from "@models/Wishlist";
 import { Request, Response } from "express";
+import Wishlist from "../models/Wishlist";
+import Product from "../models/Product";
 
 export const getWishlist = async (
   req: Request,
@@ -16,6 +16,7 @@ export const getWishlist = async (
         message: "Can't get wishlist, something went wrong",
         error: "Wishlist not found",
       });
+      return;
     }
     res
       .status(200)
@@ -33,8 +34,18 @@ export const addToWishlist = async (
   res: Response
 ): Promise<void> => {
   const userId = req.user!.id;
-  const { productId } = req.body;
+  const { productId } = req.params;
+
   try {
+    const product = await Product.findById(productId);
+    if (!product) {
+      res.status(404).json({
+        message: "Can't Add to wishlist, something went wrong",
+        error: "Product not found",
+      });
+      return;
+    }
+
     const wishlist = await Wishlist.findOneAndUpdate(
       { user: userId },
       { $addToSet: { products: productId } },
@@ -56,7 +67,7 @@ export const removeFromWishlist = async (
   res: Response
 ): Promise<void> => {
   const userId = req.user!.id;
-  const { productId } = req.body;
+  const { productId } = req.params;
 
   try {
     const wishlist = await Wishlist.findOneAndUpdate(

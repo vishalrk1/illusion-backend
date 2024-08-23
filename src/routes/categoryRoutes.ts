@@ -8,7 +8,11 @@ const router = express.Router();
 
 router.get("/", categoryController.getCateories);
 router.get("/:id", categoryController.getCategoryById);
-router.get("/products/:id", productsController.getProductsByCategory);
+router.get(
+  "/products/:id",
+  authenticate,
+  productsController.getProductsByCategory
+);
 
 // Admin
 router.post(

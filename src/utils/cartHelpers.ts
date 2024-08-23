@@ -1,5 +1,5 @@
-import { Cart } from "@models/Cart";
-import Product from "@models/Product";
+import { Cart } from "../models/Cart";
+import Product from "../models/Product";
 
 export async function calculateCartTotal(cart: Cart) {
   let total = 0;

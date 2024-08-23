@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
+import { calculateCartTotal } from "../utils/cartHelpers";
+
 import Cart, { CartItem } from "../models/Cart";
 import User from "../models/User";
-import { calculateCartTotal } from "utils/cartHelpers";
-import Product from "@models/Product";
+import Product from "../models/Product";
 
 export const getCart = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user!.id;
   try {
     const user = await User.findById(userId);
-    console.log(user);
     const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
     if (!cart) {

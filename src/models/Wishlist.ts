@@ -6,7 +6,7 @@ export interface Wishlist extends Document {
 }
 
 const wishlistSchema = new Schema<Wishlist>({
-  user: { type: Schema.Types.ObjectId, required: true },
+  user: { type: Schema.Types.ObjectId, required: true, unique: true },
   products: [{ type: Schema.Types.ObjectId, ref: "Product" }],
 });
 

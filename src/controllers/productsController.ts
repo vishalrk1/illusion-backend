@@ -1,4 +1,4 @@
-import Wishlist from "@models/Wishlist";
+import Wishlist from "../models/Wishlist";
 import Product, { IProduct } from "../models/Product";
 import { Request, Response } from "express";
 import mongoose from "mongoose";
@@ -58,6 +58,7 @@ export const getProductsByCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  const userId = req?.user?.id;
   const { id } = req.params;
   const { isFeatured } = req.query;
   try {
@@ -65,10 +66,38 @@ export const getProductsByCategory = async (
     if (isFeatured === "true") {
       query.isFeatured = true;
     }
-    const products = await Product.find(query);
-    res
-      .status(200)
-      .json({ message: "Products fetched sucessfully", data: products });
+    const products =
+      isFeatured === "true"
+        ? await Product.find(query).populate("category").lean()
+        : await Product.find(query).lean();
+
+    // if logged in
+    if (userId) {
+      const wishlist = await Wishlist.findOne({ user: userId });
+      const productsWithWishlistInfo = products.map((product: any) => ({
+        ...product,
+        isWishlisted: wishlist
+          ? wishlist.products.some(
+              (wishlistProductId: mongoose.Types.ObjectId) =>
+                wishlistProductId.equals(product._id)
+            )
+          : false,
+      }));
+      res.status(200).json({
+        message: "Products fetched successfully",
+        data: productsWithWishlistInfo,
+      });
+    } else {
+      // If user not logged in
+      const productsWithWishlistInfo = products.map((product: any) => ({
+        ...product,
+        isWishlisted: false,
+      }));
+      res.status(200).json({
+        message: "Products fetched successfully",
+        data: productsWithWishlistInfo,
+      });
+    }
   } catch (error) {
     res
       .status(400)
