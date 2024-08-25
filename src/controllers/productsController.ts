@@ -18,30 +18,33 @@ export const getProducts = async (
 
     const products =
       isFeatured === "true"
-        ? await Product.find(query).populate("category")
-        : await Product.find(query);
+        ? await Product.find(query).populate("category").lean()
+        : await Product.find(query).lean();
 
     // if logged in
     if (userId) {
       const wishlist = await Wishlist.findOne({ user: userId });
-      const productsWithWishlistInfo = products.map((product: IProduct) => ({
+      const productsWithWishlistInfo = products.map((product: any) => ({
         ...product,
         isWishlisted: wishlist
-          ? wishlist.products.includes(product._id as mongoose.Types.ObjectId)
+          ? wishlist.products.some(
+              (wishlistProductId: mongoose.Types.ObjectId) =>
+                wishlistProductId.equals(product._id)
+            )
           : false,
       }));
       res.status(200).json({
-        message: "Products fetched sucessfully",
+        message: "Products fetched successfully",
         data: productsWithWishlistInfo,
       });
     } else {
-      // If use not logged in
-      const productsWithWishlistInfo = products.map((product: IProduct) => ({
+      // If user not logged in
+      const productsWithWishlistInfo = products.map((product: any) => ({
         ...product,
         isWishlisted: false,
       }));
       res.status(200).json({
-        message: "Products fetched sucessfully",
+        message: "Products fetched successfully",
         data: productsWithWishlistInfo,
       });
     }
