@@ -22,10 +22,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         .json({ message: "User Already Exists with this phone number!" });
     }
 
-    const user = await authService.registerUser(req.body);
+    const { user, token } = await authService.registerUser(req.body);
     res
       .status(201)
-      .json({ message: "User registered successfully", userId: user._id });
+      .json({ message: "User registered successfully", token, user });
   } catch (error) {
     res.status(500).json({
       message: "Registration failed",

@@ -3,10 +3,11 @@ import { generateToken } from "../utils/jwtUtils";
 
 export const registerUser = async (
   userData: Partial<IUser>
-): Promise<IUser> => {
+): Promise<{ user: IUser; token: string } | null> => {
   const user = new User(userData);
   user.save();
-  return user;
+  const token = generateToken(user);
+  return { user, token };
 };
 
 export const loginUser = async (
@@ -14,7 +15,7 @@ export const loginUser = async (
   password: string
 ): Promise<{ user: IUser; token: string } | null> => {
   const user = await User.findOne({ phone });
-  console.log("Found User: ", user.comparePassword(password))
+  console.log("Found User: ", user.comparePassword(password));
   if (!user || !(await user.comparePassword(password))) {
     return null;
   }
