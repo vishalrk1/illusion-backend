@@ -10,10 +10,10 @@ export const registerUser = async (
 };
 
 export const loginUser = async (
-  email: string,
+  phone: string,
   password: string
 ): Promise<{ user: IUser; token: string } | null> => {
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ phone });
   console.log("Found User: ", user.comparePassword(password))
   if (!user || !(await user.comparePassword(password))) {
     return null;

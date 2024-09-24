@@ -17,7 +17,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const existingUser = await User.findOne({ phone });
     console.log("Existing USer: ", existingUser);
     if (existingUser) {
-      res.status(400).json({ message: "User Already Exists with this phone number!" });
+      res
+        .status(400)
+        .json({ message: "User Already Exists with this phone number!" });
     }
 
     const user = await authService.registerUser(req.body);
@@ -34,14 +36,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body;
-    console.log(req.body);
+    const { phone, password } = req.body;
 
-    if (!email || !password) {
-      res.status(400).json({ message: "Please provide email & password" });
+    if (!phone || !password) {
+      res.status(400).json({ message: "Please provide phone & password" });
     }
 
-    const result = await authService.loginUser(email, password);
+    const result = await authService.loginUser(phone, password);
     if (!result) {
       res.status(401).json({
         message: "Invalid credentials",
