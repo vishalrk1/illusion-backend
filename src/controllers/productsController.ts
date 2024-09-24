@@ -192,3 +192,23 @@ export const removeProduct = async (
       .json({ message: "Cant remove Product, Something went wrong" });
   }
 };
+
+export const getFeaturedProducts = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const products = await Product.find({ isFeatured: true })
+      .populate("category")
+      .lean();
+    res.status(200).json({
+      message: "Featured Products fetched successfully",
+      data: products,
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: "Cant get Products, Something went wrong",
+      error: (error as Error).message,
+    });
+  }
+};

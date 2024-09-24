@@ -10,6 +10,7 @@ router.get(
   authorize(["user", "admin"]),
   productsController.getProducts
 );
+router.get("/featured", productsController.getFeaturedProducts);
 router.get("/:id", productsController.getProductById);
 
 // Admin routers

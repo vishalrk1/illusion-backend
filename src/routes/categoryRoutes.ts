@@ -10,7 +10,6 @@ router.get("/", categoryController.getCateories);
 router.get("/:id", categoryController.getCategoryById);
 router.get(
   "/products/:id",
-  authenticate,
   productsController.getProductsByCategory
 );
 
