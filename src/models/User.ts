@@ -22,7 +22,7 @@ const userSchema = new Schema<IUser>(
     password: { type: String, required: true },
     first_name: { type: String, required: true },
     last_name: { type: String },
-    phone: { type: String },
+    phone: { type: String, unique: true },
     addresses: [addressSchema],
     role: { type: String, enum: ["user", "admin"], default: "user" },
     image: { type: String, default: process.env.DEFAULT_PFP_MALE },

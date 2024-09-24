@@ -5,19 +5,19 @@ import Address from "../models/Address";
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { first_name, email, password } = req.body;
+    const { first_name, phone, email, password } = req.body;
     console.log(req.body);
 
-    if (!first_name || !email || !password) {
+    if (!first_name || !phone || !email || !password) {
       res
         .status(400)
         .json({ message: "Please provide name, email & password" });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ phone });
     console.log("Existing USer: ", existingUser);
     if (existingUser) {
-      res.status(400).json({ message: "User Already Exists!" });
+      res.status(400).json({ message: "User Already Exists with this phone number!" });
     }
 
     const user = await authService.registerUser(req.body);
