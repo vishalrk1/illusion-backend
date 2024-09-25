@@ -50,7 +50,7 @@ export const addToWishlist = async (
       { user: userId },
       { $addToSet: { products: productId } },
       { upsert: true, new: true }
-    );
+    ).populate("products");
     res
       .status(200)
       .json({ message: "Product added to wishlist", data: wishlist });
@@ -74,7 +74,7 @@ export const removeFromWishlist = async (
       { user: userId },
       { $pull: { products: productId } },
       { new: true }
-    );
+    ).populate("products");
     res
       .status(200)
       .json({ message: "Product removed from wishlist", data: wishlist });

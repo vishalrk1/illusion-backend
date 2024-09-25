@@ -35,7 +35,7 @@ export const addProductToCart = async (
   const userId = req.user.id;
   const { productId, quantity } = req.body;
   try {
-    let cart = await Cart.findOne({ user: userId }).populate("items.product");
+    let cart = await Cart.findOne({ user: userId });
     if (!cart) {
       cart = new Cart({ user: userId, items: [], total: 0 });
     }
@@ -52,6 +52,7 @@ export const addProductToCart = async (
 
     cart.total = await calculateCartTotal(cart);
     await cart.save();
+    await cart.populate("items.product");
     res.status(200).json({ message: "Item added sucessfully", data: cart });
   } catch (error) {
     res.status(400).json({
@@ -95,6 +96,7 @@ export const updateCartItem = async (
 
     cart.total = await calculateCartTotal(cart);
     await cart.save();
+    await cart.populate("items.product");
     res.status(200).json({ message: "Updated cart sucessfully", data: cart });
   } catch (error) {
     res.status(500).json({ message: "Error updating cart" });
