@@ -4,8 +4,8 @@ import { addressSchema, IAddress } from "./Address";
 
 export interface OrderItem extends Document {
   product: mongoose.Types.ObjectId | IProduct;
-  quantity: Number;
-  price: Number;
+  quantity: number;
+  price: number;
 }
 
 const orderItemSchema = new Schema<OrderItem>({
@@ -17,7 +17,7 @@ const orderItemSchema = new Schema<OrderItem>({
 export interface Order extends Document {
   user: mongoose.Types.ObjectId;
   items: OrderItem[];
-  totalAmount: Number;
+  totalAmount: number;
   shippingAddress: IAddress;
   paymentMethod: string;
   paymentStatus: "pending" | "paid" | "failed";

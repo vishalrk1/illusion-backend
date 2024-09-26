@@ -6,7 +6,9 @@ import { Request, Response } from "express";
 export const getOrders = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const orders = await Order.find({ user: userId }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user: userId }).sort({ createdAt: -1 }).populate(
+      "items.product"
+    );
     res.status(200).json({
       message: "Sucessfull fetched orders",
       data: orders,
@@ -63,7 +65,8 @@ export const createOrder = async (
       });
     }
 
-    res.status(200).json({ message: "order placed sucessfully", data: order });
+    const populatedOrder = await Order.findById(order._id).populate('items.product');
+    res.status(200).json({ message: "order placed sucessfully", data: populatedOrder });
   } catch (error) {
     res.status(400).json({
       message: "Cant get orders, something went wrong",
