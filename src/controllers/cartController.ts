@@ -88,7 +88,7 @@ export const updateCartItem = async (
       // checking if product has sufficient stock
       const product = await Product.findById(productId);
       if (!product || product.stockQuantity < quantity) {
-        res.status(400).json({ message: "Stock is not available!" });
+        res.status(404).json({ message: "Stock is not available!" });
         return;
       }
       cart.items[itemIndex].quantity = quantity;
@@ -119,6 +119,7 @@ export const removeCartItem = async (
     );
     cart.total = await calculateCartTotal(cart);
     await cart.save();
+    await cart.populate("items.product");
     res.status(200).json({ message: "Items removed sucessfully", data: cart });
   } catch (error) {
     res.status(500).json({
