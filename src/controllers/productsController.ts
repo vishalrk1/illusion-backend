@@ -131,7 +131,6 @@ export const addProduct = async (
 ): Promise<void> => {
   try {
     const product = new Product(req.body);
-    console.log(product);
     await product.save();
     res
       .status(200)
