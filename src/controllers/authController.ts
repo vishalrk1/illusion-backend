@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import * as authService from "../services/authService";
 import User from "../models/User";
 import Address from "../models/Address";
+import Cart from "../models/Cart";
+import Wishlist from "../models/Wishlist";
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -12,17 +14,25 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       res
         .status(400)
         .json({ message: "Please provide name, email & password" });
+      return;
     }
 
     const existingUser = await User.findOne({ phone });
-    console.log("Existing USer: ", existingUser);
     if (existingUser) {
       res
         .status(400)
         .json({ message: "User Already Exists with this phone number!" });
+      return;
     }
 
     const { user, token } = await authService.registerUser(req.body);
+    if (user) {
+      user.isProfileComplete = false;
+      const cart = new Cart({ user: user._id, items: [], total: 0 });
+      const wishlist = new Wishlist({ user: user._id, products: [] });
+      await cart.save();
+      await wishlist.save();
+    }
     res
       .status(201)
       .json({ message: "User registered successfully", token, user });
@@ -40,6 +50,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     if (!phone || !password) {
       res.status(400).json({ message: "Please provide phone & password" });
+      return;
     }
 
     const result = await authService.loginUser(phone, password);

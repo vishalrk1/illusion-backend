@@ -1,8 +1,9 @@
-import Feedback from "@models/Feedback";
+import Feedback from "../models/Feedback";
 import { Request, Response } from "express";
 
 export const getFeedBacks = async (req: Request, res: Response) => {
   const { isFeatured } = req.query;
+  console.log(req.query);
   try {
     let query: any = {};
     if (isFeatured === "true") {
@@ -23,8 +24,10 @@ export const getFeedBacks = async (req: Request, res: Response) => {
 
 export const createFeedback = async (req: Request, res: Response) => {
   const userId = req.user!.id;
+  const { message } = req.body;
   try {
-    const feedback = new Feedback(req.body);
+    
+    const feedback = new Feedback({ user: userId, message: message });
     await feedback.save();
     res.status(200).json({
       message: "Feedback added successfully",
@@ -32,7 +35,7 @@ export const createFeedback = async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.status(400).json({
-      message: "Cant add Product, Something went wrong",
+      message: "Feedback not submitted, Something went wrong",
       error: (error as Error).message,
     });
   }

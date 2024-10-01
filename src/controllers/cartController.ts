@@ -15,6 +15,7 @@ export const getCart = async (req: Request, res: Response): Promise<void> => {
       res.status(404).json({
         message: "Cart not found",
       });
+      return;
     }
 
     res

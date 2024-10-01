@@ -8,7 +8,7 @@ interface Feedback extends Document {
 
 const FeedbackSchema = new mongoose.Schema<Feedback>(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true },
     message: { type: String, required: true },
     isFeatured: { type: Boolean, default: false },
   },
