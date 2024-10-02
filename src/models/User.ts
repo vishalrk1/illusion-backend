@@ -11,7 +11,7 @@ export interface IUser extends Document {
   role: "user" | "admin";
   image: string;
   addresses: Types.Array<IAddress>;
-  isProfileComplete: Boolean;
+  isProfileComplete: boolean;
   lastLogin: Date;
   comparePassword(userPassword: string): Promise<boolean>;
 }
@@ -26,7 +26,7 @@ const userSchema = new Schema<IUser>(
     addresses: [addressSchema],
     role: { type: String, enum: ["user", "admin"], default: "user" },
     image: { type: String, default: process.env.DEFAULT_PFP_MALE },
-    isProfileComplete: { type: String, default: false },
+    isProfileComplete: { type: Boolean, default: false },
     lastLogin: { type: Date },
   },
   {

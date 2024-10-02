@@ -98,9 +98,9 @@ export const updateProfile = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { phone, email } = req.body;
+  const { phone, email, address } = req.body;
   const userId = req.user!.id;
-  
+
   if (!phone || !email) {
     res.status(400).json({
       message: "Please provide phone number and address",
@@ -108,33 +108,21 @@ export const updateProfile = async (
     return;
   }
 
-  // Check for all required address fields
-  // const requiredAddressFields = [
-  //   "address_line1",
-  //   "address_type",
-  //   "city",
-  //   "state",
-  //   "country",
-  //   "postal_code",
-  // ];
-  // for (const field of requiredAddressFields) {
-  //   if (!address[field]) {
-  //     res.status(400).json({
-  //       message: `Please provide ${field} in the address`,
-  //     });
-  //     return;
-  //   }
-  // }
-
   try {
-    const existingUser = await User.findByIdAndUpdate(userId, {
-      ...req.body,
-      isProfileComplete: true,
-    });
+    const existingUser = await User.findById(userId);
 
     if (!existingUser) {
       res.status(404).json({ message: "User not found" });
       return;
+    }
+
+    Object.assign(existingUser, { ...req.body });
+    existingUser.isProfileComplete = true;
+
+    if (address) {
+      const newAddress = new Address(address);
+      await newAddress.validate();
+      existingUser.addresses.push(newAddress);
     }
 
     await existingUser.save();
