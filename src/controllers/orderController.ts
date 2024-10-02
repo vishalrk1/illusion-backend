@@ -28,8 +28,8 @@ export const createOrder = async (
 ): Promise<void> => {
   const userId = req.user!.id;
   const { shippingAddress, paymentMethod } = req.body;
-  console.log(userId);
-  // using mongoose sessions for a
+
+  // using mongoose sessions 
   const session: ClientSession = await startSession();
   session.startTransaction();
 
