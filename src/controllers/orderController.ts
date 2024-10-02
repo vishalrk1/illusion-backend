@@ -1,14 +1,15 @@
-import Product from "../models/Product";
-import Cart, { CartItem } from "../models/Cart";
+import Product, { IProduct } from "../models/Product";
+import Cart, { Cart as CartType, CartItem } from "../models/Cart";
 import Order, { OrderItem } from "../models/Order";
 import { Request, Response } from "express";
+import { ClientSession, ObjectId, startSession } from "mongoose";
 
 export const getOrders = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const orders = await Order.find({ user: userId }).sort({ createdAt: -1 }).populate(
-      "items.product"
-    );
+    const orders = await Order.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .populate("items.product");
     res.status(200).json({
       message: "Sucessfull fetched orders",
       data: orders,
@@ -27,25 +28,50 @@ export const createOrder = async (
 ): Promise<void> => {
   const userId = req.user!.id;
   const { shippingAddress, paymentMethod } = req.body;
+  console.log(userId);
+  // using mongoose sessions for a
+  const session: ClientSession = await startSession();
+  session.startTransaction();
+
   try {
-    const cart = await Cart.findOne({ user: userId }).populate("items.product");
+    const cart = await Cart.findOne({ user: userId })
+      .populate<{ items: { product: IProduct; quantity: number }[] }>(
+        "items.product"
+      )
+      .session(session);
 
     if (!cart || cart.items.length == 0) {
+      session.abortTransaction();
       res.status(404).json({
         message: "Cart is empty",
       });
+      return
     }
 
-    const orderItems = cart.items.map((item: any) => ({
-      product: item.product._id,
-      quantity: item.quantity,
-      price: item.product.price,
-    })) as OrderItem[];
+    const orderItems = [];
+    let totalAmount = 0;
 
-    const totalAmount = orderItems.reduce(
-      (total, item) => total + Number(item.price) * Number(item.quantity),
-      0
-    );
+    for (const item of cart.items) {
+      const product = item.product;
+      if (product.stockQuantity < item.quantity) {
+        await session.abortTransaction();
+        res.status(400).json({ message: "Stock is not available!" });
+        return
+      }
+
+      orderItems.push({
+        product: product._id,
+        quantity: item.quantity,
+        price: product.price,
+      });
+      totalAmount += product.price * item.quantity;
+
+      await Product.findByIdAndUpdate(
+        product._id,
+        { $inc: { stockQuantity: -item.quantity } },
+        { session, new: true }
+      );
+    }
 
     const order = new Order({
       user: userId,
@@ -56,22 +82,30 @@ export const createOrder = async (
       paymentStatus: "pending",
       orderStatus: "processing",
     });
-    await order.save();
-    await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [] } });
 
-    for (const item of orderItems) {
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: { stockQuantity: -item.quantity },
-      });
-    }
+    await order.save({ session });
+    await Cart.findOneAndUpdate(
+      { user: userId },
+      { $set: { items: [] } },
+      { session }
+    );
 
-    const populatedOrder = await Order.findById(order._id).populate('items.product');
-    res.status(200).json({ message: "order placed sucessfully", data: populatedOrder });
+    const populatedOrder = await Order.findById(order._id)
+      .populate("items.product")
+      .session(session);
+
+    await session.commitTransaction();
+    res
+      .status(200)
+      .json({ message: "order placed sucessfully", data: populatedOrder });
   } catch (error) {
+    await session.abortTransaction();
     res.status(400).json({
       message: "Cant get orders, something went wrong",
       error: (error as Error).message,
     });
+  } finally {
+    session.endSession();
   }
 };
 

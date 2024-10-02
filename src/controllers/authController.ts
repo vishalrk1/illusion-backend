@@ -98,11 +98,10 @@ export const updateProfile = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { phone, address, user } = req.body;
-  const userId = user._id;
-  console.log(req?.user);
-
-  if (!phone || !address) {
+  const { phone, email } = req.body;
+  const userId = req.user!.id;
+  
+  if (!phone || !email) {
     res.status(400).json({
       message: "Please provide phone number and address",
     });
@@ -110,51 +109,38 @@ export const updateProfile = async (
   }
 
   // Check for all required address fields
-  const requiredAddressFields = [
-    "address_line1",
-    "address_type",
-    "city",
-    "state",
-    "country",
-    "postal_code",
-  ];
-  for (const field of requiredAddressFields) {
-    if (!address[field]) {
-      res.status(400).json({
-        message: `Please provide ${field} in the address`,
-      });
-      return;
-    }
-  }
+  // const requiredAddressFields = [
+  //   "address_line1",
+  //   "address_type",
+  //   "city",
+  //   "state",
+  //   "country",
+  //   "postal_code",
+  // ];
+  // for (const field of requiredAddressFields) {
+  //   if (!address[field]) {
+  //     res.status(400).json({
+  //       message: `Please provide ${field} in the address`,
+  //     });
+  //     return;
+  //   }
+  // }
 
   try {
-    const existingUser = await User.findById(userId);
+    const existingUser = await User.findByIdAndUpdate(userId, {
+      ...req.body,
+      isProfileComplete: true,
+    });
+
     if (!existingUser) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
-    existingUser.phone = phone;
-
-    // Create a new Address document
-    const newAddress = new Address(address);
-    await newAddress.validate();
-
-    existingUser.addresses.push(newAddress);
-    existingUser.isProfileComplete = true;
-
     await existingUser.save();
-    res.json({
+    res.status(200).json({
       message: "Profile completed successfully",
-      user: {
-        id: existingUser._id,
-        name: existingUser.first_name,
-        email: existingUser.email,
-        phoneNumber: existingUser.phone,
-        addresses: existingUser.addresses,
-        image: existingUser.image,
-        isProfileComplete: existingUser.isProfileComplete,
-      },
+      user: existingUser,
     });
   } catch (error) {
     res.status(500).json({
