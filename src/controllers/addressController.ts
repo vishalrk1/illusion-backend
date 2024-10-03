@@ -7,8 +7,8 @@ export const addAddress = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const userId = req.user!._id;
-  const { address } = req.body;
+  const userId = req.user!.id;
+  const address = req.body;
 
   // Check for all required address fields
   const requiredAddressFields = [
@@ -40,21 +40,11 @@ export const addAddress = async (
     await newAddress.validate();
 
     existingUser.addresses.push(newAddress);
-    existingUser.isProfileComplete = true;
-
     await existingUser.save();
 
     res.json({
       message: "Profile completed successfully",
-      user: {
-        id: existingUser._id,
-        name: existingUser.first_name,
-        email: existingUser.email,
-        phoneNumber: existingUser.phone,
-        addresses: existingUser.addresses,
-        image: existingUser.image,
-        isProfileComplete: existingUser.isProfileComplete,
-      },
+      addresses: existingUser.addresses,
     });
   } catch (error) {
     res.status(500).json({
@@ -68,35 +58,47 @@ export const updateAddress = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const userId = req.user!._id;
-  const { addressId } = req.body;
+  const userId = req.user!.id;
+  const { addressId } = req.params;
   const updatedAddress = req.body;
 
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).session(session);
 
     if (!user) {
+      session.abortTransaction();
       res.status(404).json({ message: "User not found" });
       return;
     }
 
-    const address = await Address.findById(addressId);
-    if (!address) {
+    const addressIndex = user.addresses.findIndex(
+      (item) => item._id.toString() === addressId
+    );
+    if (addressIndex === -1) {
+      session.abortTransaction();
       res.status(404).json({ message: "Address Not Found!!" });
+      return;
     }
 
-    Object.assign(address, updatedAddress);
-    await address.save();
+    Object.assign(user.addresses[addressIndex], updatedAddress);
+    await user.save({ session });
 
+    await session.commitTransaction();
     res.status(200).json({
       message: "Address updated sucessfully",
-      address: address,
+      address: user.addresses,
     });
   } catch (error) {
+    session.abortTransaction();
     res.status(500).json({
-      message: "Error updating address",
+      message: "Error updatinag address",
       error: (error as Error).message,
     });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -104,8 +106,10 @@ export const deleteAddress = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const userId = req.user!._id;
+  const userId = req.user!.id;
   const { addressId } = req.params;
+
+  console.log(addressId);
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -121,7 +125,7 @@ export const deleteAddress = async (
     }
 
     const addressIndex = user.addresses.findIndex(
-      (addr) => addr._id === addressId
+      (addr) => addr._id.toString() === addressId
     );
 
     if (addressIndex === -1) {
@@ -144,6 +148,7 @@ export const deleteAddress = async (
 
     res.status(200).json({
       message: "Address deleted sucessfully",
+      addresses: user.addresses,
     });
   } catch (error) {
     res.status(500).json({ message: "Error in deleting Address" });
