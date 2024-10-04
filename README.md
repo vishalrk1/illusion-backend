@@ -13,18 +13,18 @@
 - [x] APIs for categories & Products
 - [ ] Add & GET feedback api
 - [x] User Cart API's
-- [ ] User Wishlist API's
-- [ ] User Orders related API's
+- [x] User Wishlist API's
+- [x] User Orders related API's
 - [ ] API's for admin dashboard
 - [ ] API for payment with stripe
 - [ ] Payment stripe integration
 
 ## Frontend Integration
 
-- [ ] Onboarding users (login/register)
+- [x] Onboarding users (login/register)
 - [x] Get Category & Producs
-- [ ] Updating cart logic & api calls
-- [ ] Updating wishlist logic & api calls
-- [ ] Update Profile
-- [ ] add/edit address
+- [x] Updating cart logic & api calls
+- [x] Updating wishlist logic & api calls
+- [x] Update Profile
+- [x] add/edit address
 - [ ] Payment stripe integration
