@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../utils/jwtUtils";
+import User from "../models/User";
 
 declare global {
   namespace Express {
@@ -10,11 +11,11 @@ declare global {
   }
 }
 
-export const authenticate = (
+export const authenticate = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     res.status(401).json({ message: "Authorization token in required" });
@@ -25,6 +26,17 @@ export const authenticate = (
   try {
     const decoded = verifyToken(token);
     req.user = decoded;
+
+    // Update lastLogin
+    if (decoded.userId) {
+      const indianTime = new Date(
+        new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+      );
+      await User.findByIdAndUpdate(decoded.userId, {
+        lastLogin: indianTime,
+      });
+    }
+
     next();
   } catch (error) {
     res.status(401).json({ message: "Invalid or expired token" });

@@ -12,6 +12,7 @@ import wishlistRoutes from "./routes/wishlistRoute";
 import orderRouter from "./routes/orderRoutes";
 import FeedbackRouter from "./routes/feedbackRoutes";
 import AddressRouter from "./routes/addressRoutes";
+import statisticsRoutes from "./routes/statisticsRoutes";
 
 const app = express();
 
@@ -33,5 +34,6 @@ app.use("/api/order", orderRouter);
 app.use("/api/feedback", FeedbackRouter);
 
 app.use("/api/address", AddressRouter);
+app.use("/api/statistics", statisticsRoutes);
 
 export default app;

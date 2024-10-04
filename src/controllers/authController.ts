@@ -8,7 +8,6 @@ import Wishlist from "../models/Wishlist";
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { first_name, phone, email, password } = req.body;
-    console.log(req.body);
 
     if (!first_name || !phone || !email || !password) {
       res

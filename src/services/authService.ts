@@ -20,7 +20,10 @@ export const loginUser = async (
     return null;
   }
 
-  user.lastLogin = new Date();
+  const indianTime = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+  );
+  user.lastLogin = indianTime;
   await user.save();
   const token = generateToken(user);
   return { user, token };
