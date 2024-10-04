@@ -200,7 +200,6 @@ const fillMissingOrdersDates = (
 
     filledData.push({
       _id: dateKey,
-      categories: existingData ? existingData.categories : [],
       totalOrderCount: existingData ? existingData.totalOrderCount : 0,
       totalRevenue: existingData ? existingData.totalRevenue : 0,
     });
@@ -217,36 +216,13 @@ const aggregateOrdersData = async (
   timeUnit: "day" | "week" | "month" | "year"
 ) => {
   const aggregationPipeline = [
+    // Match the date range first
     {
       $match: {
         createdAt: { $gte: startDate, $lte: endDate },
       },
     },
-    {
-      $unwind: "$items",
-    },
-    {
-      $lookup: {
-        from: "products",
-        localField: "items.product",
-        foreignField: "_id",
-        as: "productInfo",
-      },
-    },
-    {
-      $unwind: "$productInfo",
-    },
-    {
-      $lookup: {
-        from: "categories",
-        localField: "productInfo.category",
-        foreignField: "_id",
-        as: "categoryInfo",
-      },
-    },
-    {
-      $unwind: "$categoryInfo",
-    },
+    // Group by date and order ID to count unique orders first
     {
       $group: {
         _id: {
@@ -256,34 +232,24 @@ const aggregateOrdersData = async (
               date: "$createdAt",
             },
           },
-          category: "$categoryInfo._id",
+          orderId: "$_id", // Use the unique order ID
         },
-        categoryName: { $first: "$categoryInfo.title" },
-        orderCount: { $sum: 1 },
-        totalRevenue: {
-          $sum: { $multiply: ["$items.quantity", "$items.price"] },
-        },
+        totalRevenue: { $sum: "$totalAmount" }, // Sum totalAmount of each order
       },
     },
+    // Calculate the total order count by date
     {
       $group: {
         _id: "$_id.date",
-        categories: {
-          $push: {
-            category: "$categoryName",
-            orderCount: "$orderCount",
-            totalRevenue: "$totalRevenue",
-          },
-        },
-        totalOrderCount: { $sum: "$orderCount" },
-        totalRevenue: { $sum: "$totalRevenue" },
+        totalOrderCount: { $sum: 1 }, // Count unique orders
+        totalRevenue: { $sum: "$totalRevenue" }, // Sum total revenue
       },
     },
+    // Sort the results by date
     {
       $sort: { _id: 1 as any },
     },
   ];
-
   let ordersData = await Order.aggregate(aggregationPipeline);
   ordersData = fillMissingOrdersDates(ordersData, startDate, endDate, timeUnit);
   return ordersData;
