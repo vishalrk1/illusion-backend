@@ -77,7 +77,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user!.id;
   try {
-    const user = await User.findById(userId);
+    const user = await User.findByIdAndUpdate(userId, {lastLogin: new Date()});
     if (!user) {
       res.status(404).json({
         message: "User not found",

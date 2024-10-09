@@ -9,7 +9,7 @@ export const getFeedBacks = async (req: Request, res: Response) => {
     if (isFeatured === "true") {
       query.isFeatured = true;
     }
-    const feedbacks = await Feedback.find(query);
+    const feedbacks = await Feedback.find(query).populate("user");
     res.status(200).json({
       message: "Feedbacks fetched successfully",
       data: feedbacks,
@@ -26,12 +26,20 @@ export const createFeedback = async (req: Request, res: Response) => {
   const userId = req.user!.id;
   const { message } = req.body;
   try {
-    
+    const existingFeedback = await Feedback.findOne({ user: userId });
+    if (existingFeedback) {
+      res.status(400).json({
+        message: "Feedback already submitted",
+      });
+      return;
+    }
+
     const feedback = new Feedback({ user: userId, message: message });
     await feedback.save();
+    const allFeedbacks = await Feedback.find();
     res.status(200).json({
       message: "Feedback added successfully",
-      data: feedback,
+      data: allFeedbacks,
     });
   } catch (error) {
     res.status(400).json({

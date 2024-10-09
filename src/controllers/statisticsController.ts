@@ -18,7 +18,7 @@ const getDateRange = (days: number): [Date, Date] => {
 };
 
 const getTimeUnit = (days: number): "day" | "week" | "month" | "year" => {
-  if (days <= 7) return "day";
+  if (days <= 20) return "day";
   if (days <= 30) return "week";
   if (days <= 365) return "month";
   return "year";
@@ -257,7 +257,7 @@ const aggregateOrdersData = async (
 
 export const getUserStats = async (req: Request, res: Response) => {
   const days =
-    typeof req.query.days === "string" ? parseInt(req.query.days, 10) : 7;
+    typeof req.query.days === "string" ? parseInt(req.query.days, 10) : 20;
   const [startDate, endDate] = getDateRange(days);
   const timeUnit = getTimeUnit(days);
 
