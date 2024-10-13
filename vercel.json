@@ -6,5 +6,5 @@
       "destination": "/src"
     }
   ],
-  "outputDirectory": "build"
+  "outputDirectory": "dist"
 }
