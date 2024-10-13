@@ -6,6 +6,7 @@
     "outDir": "dist",
     "sourceMap": true,
     "noImplicitAny": true,
+    "esModuleInterop": true,
     "paths": {
       "@models/*": ["models/*"],
       "@controllers/*": ["controllers/*"],

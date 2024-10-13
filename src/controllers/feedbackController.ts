@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 
 export const getFeedBacks = async (req: Request, res: Response) => {
   const { isFeatured } = req.query;
-  console.log(req.query);
   try {
     let query: any = {};
     if (isFeatured === "true") {
