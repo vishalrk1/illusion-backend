@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { IUser } from "models/User";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "10d";
+const JWT_EXPIRES_IN = "20d";
 
 export const generateToken = (user: IUser): string => {
   return jwt.sign(
