@@ -177,11 +177,18 @@ export const updateCartItem = async (
     cart.total = await calculateCartTotal(cart);
 
     await Promise.all([
-      cart.save(),
-      Product.findByIdAndUpdate(productId, {
-        $inc: { stockQuantity: -quantityDiff },
-      }),
+      cart.save({ session }),
+      Product.findByIdAndUpdate(
+        productId,
+        {
+          $inc: { stockQuantity: -quantityDiff },
+        },
+        { session }
+      ),
     ]);
+
+    session.commitTransaction()
+    session.endSession()
 
     await cart.populate("items.product");
     res.status(200).json({ message: "Updated cart sucessfully", data: cart });
@@ -196,11 +203,16 @@ export const removeCartItem = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  const session = await mongoose.startSession()
+  session.startTransaction()
   try {
-    const cart = await Cart.findOne({ user: req.user!.id });
+    const cart = await Cart.findOne({ user: req.user!.id }, {session});
 
     if (!cart) {
+      session.abortTransaction()
+      session.endSession()
       res.status(404).json({ message: "Cart not found" });
+      return
     }
 
     cart.items = cart.items.filter(
