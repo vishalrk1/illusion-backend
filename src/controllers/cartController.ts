@@ -58,24 +58,15 @@ export const addProductToCart = async (
     ]);
 
     if (!cart) {
-      session.abortTransaction();
-      session.endSession();
-      res.status(404).json({ message: "Cart not found" });
-      return;
+      throw new Error("Cart not found");
     }
 
     if (!product) {
-      session.abortTransaction();
-      session.endSession();
-      res.status(404).json({ message: "Product not found" });
-      return;
+      throw new Error("Product not found");
     }
 
     if (product.stockQuantity < quantity) {
-      session.abortTransaction();
-      session.endSession();
-      res.status(400).json({ message: "Stock is not available!" });
-      return;
+      throw new Error("Stock is not available!");
     }
 
     const existingCartItem = cart.items.find(
@@ -129,25 +120,17 @@ export const updateCartItem = async (
       Cart.findOne({ user: req.user!.id }, { session }),
       Product.findById(productId).select("stockQuantity").session(session),
     ]);
+
     if (!cart) {
-      session.abortTransaction();
-      session.endSession();
-      res.status(404).json({ message: "Cart not found" });
-      return;
+      throw new Error("Cart not found");
     }
 
     if (!product) {
-      session.abortTransaction();
-      session.endSession();
-      res.status(404).json({ message: "Priduct not found" });
-      return;
+      throw new Error("Product not found");
     }
 
     if (product.stockQuantity < quantity) {
-      session.abortTransaction();
-      session.endSession();
-      res.status(404).json({ message: "Stock is not available!" });
-      return;
+      throw new Error("Stock is not available!");
     }
 
     const itemIndex = cart.items.findIndex(
@@ -155,10 +138,7 @@ export const updateCartItem = async (
     );
 
     if (itemIndex === -1) {
-      session.abortTransaction();
-      session.endSession();
-      res.status(404).json({ message: "Item not found in cart" });
-      return;
+      throw new Error("Item not found in cart");
     }
 
     const currentQuantity = cart.items[itemIndex].quantity as number;
@@ -187,15 +167,15 @@ export const updateCartItem = async (
       ),
     ]);
 
-    session.commitTransaction()
-    session.endSession()
+    session.commitTransaction();
+    session.endSession();
 
     await cart.populate("items.product");
     res.status(200).json({ message: "Updated cart sucessfully", data: cart });
   } catch (error) {
     session.abortTransaction();
     session.endSession();
-    res.status(500).json({ message: "Error updating cart" });
+    res.status(500).json({ message: (error as Error).message });
   }
 };
 
@@ -203,23 +183,42 @@ export const removeCartItem = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
+  const { productId } = req.params;
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const cart = await Cart.findOne({ user: req.user!.id }, {session});
+    const cart = await Cart.findOne({ user: req.user!.id }, { session });
 
     if (!cart) {
-      session.abortTransaction()
-      session.endSession()
-      res.status(404).json({ message: "Cart not found" });
-      return
+      throw new Error("Cart not found");
     }
 
-    cart.items = cart.items.filter(
-      (item) => item.product.toString() !== req.params.productId
+    const itemIndx = cart.items.findIndex(
+      (item) => item.product.toString() === productId
     );
+
+    if (itemIndx === -1) {
+      throw new Error("Item not found in cart");
+    }
+
+    const removeQuantity = cart.items[itemIndx].quantity;
+    cart.items.splice(itemIndx, 1);
     cart.total = await calculateCartTotal(cart);
-    await cart.save();
+
+    await Promise.all([
+      cart.save({ session }),
+      Product.findByIdAndUpdate(
+        productId,
+        {
+          $inc: { stockQuantity: removeQuantity },
+        },
+        { session }
+      ),
+    ]);
+
+    session.commitTransaction();
+    session.endSession();
+
     await cart.populate("items.product");
     res.status(200).json({ message: "Items removed sucessfully", data: cart });
   } catch (error) {
